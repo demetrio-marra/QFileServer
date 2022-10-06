@@ -1,0 +1,12 @@
+version: '3.4'
+
+services:
+  qfileserverdb:
+    image: "mcr.microsoft.com/mssql/server"
+  qfileserver:
+    image: ${DOCKER_REGISTRY-}qfileserver
+    build:
+      context: .
+      dockerfile: QFileServer/Dockerfile
+    depends_on:
+      - qfileserverdb

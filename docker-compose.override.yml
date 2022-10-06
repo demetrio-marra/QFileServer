@@ -1,0 +1,19 @@
+version: '3.4'
+
+services:
+  qfileserverdb:
+    environment:
+      SA_PASSWORD: "yourStrong(!)Password"
+      ACCEPT_EULA: "Y"
+  qfileserver:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - ConnectionStrings__DefaultConnectionString=Server=qfileserverdb;Initial Catalog=QFileServer;Persist Security Info=False;User ID=sa;Password=yourStrong(!)Password;
+    ports:
+      - "80"
+      - "443"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+      - ${USERPROFILE}/nas:/nas

@@ -5,6 +5,8 @@ VisualStudioVersion = 17.3.32901.215
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QFileServer", "QFileServer\QFileServer.csproj", "{44E3A348-C724-4382-929C-9D4B952BD74A}"
 EndProject
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{DA3C9BAE-5E86-411B-A6A1-C2B92F96D304}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{44E3A348-C724-4382-929C-9D4B952BD74A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{44E3A348-C724-4382-929C-9D4B952BD74A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{44E3A348-C724-4382-929C-9D4B952BD74A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA3C9BAE-5E86-411B-A6A1-C2B92F96D304}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA3C9BAE-5E86-411B-A6A1-C2B92F96D304}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA3C9BAE-5E86-411B-A6A1-C2B92F96D304}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA3C9BAE-5E86-411B-A6A1-C2B92F96D304}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
