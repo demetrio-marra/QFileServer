@@ -12,6 +12,12 @@ namespace QFileServer.Data
             context = dbContext;
         }
 
+        public IQueryable<QFileServerEntity> GetAllOData()
+        {
+            return context.Set<QFileServerEntity>().AsNoTracking()
+                .AsQueryable();
+        }
+
         public async Task<IEnumerable<QFileServerEntity>> GetAll()
             => await context.Set<QFileServerEntity>().AsNoTracking().ToListAsync();
 

@@ -23,6 +23,13 @@ namespace QFileServer
             this.storageDirectorySelector = storageDirectorySelector;
             this.logger = logger;
         }
+
+        public IQueryable<QFileServerModel> GetAllFilesOData()
+        {
+            var entities = repository.GetAllOData();
+            return mapper.ProjectTo<QFileServerModel>(entities);
+        }
+
         public async Task<IEnumerable<QFileServerModel>> GetAllFiles()
         {
             var models = mapper.Map<IEnumerable<QFileServerModel>>(await repository.GetAll());

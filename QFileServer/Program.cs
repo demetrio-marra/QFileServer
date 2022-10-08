@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.EntityFrameworkCore;
 using QFileServer;
@@ -26,7 +27,9 @@ builder.Services.AddScoped<QFileServerService>();
 
 builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddOData(options => options.Filter().OrderBy().Count().SetMaxTop(1000).SkipToken());
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

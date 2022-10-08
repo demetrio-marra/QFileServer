@@ -10,6 +10,11 @@ namespace QFileServer.Data
             
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.LogTo(Console.WriteLine);
+        }
+
         public DbSet<QFileServerEntity> FilesRepo { get; set; } = null!;
     }
 }

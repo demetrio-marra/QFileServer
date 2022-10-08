@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.StaticFiles;
 using QFileServer.DTOs;
 using QFileServer.Models;
@@ -26,15 +27,15 @@ namespace QFileServer.Controllers
         }
 
         [HttpGet]
-        [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(IEnumerable<FileDTO>), description: "File model in repository")]
-        [SwaggerResponse((int)HttpStatusCode.NoContent, description: "No files in repository")]
-        public async Task<IActionResult> GetAll()
+        [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(IQueryable<FileDTO>), description: "Files in repository")]
+        [EnableQuery]
+        public IQueryable<FileDTO> GetAll()
         {
-            var models = await service.GetAllFiles();
-            if (models.Count() == 0)
-                return NoContent();
-            var dtos = mapper.Map<IEnumerable<FileDTO>>(models);
-            return Ok(dtos);
+            // TODO:
+            // Make sure about max number of records returned
+            // even when no top clause is provided
+            var models = service.GetAllFilesOData();
+            return mapper.ProjectTo<FileDTO>(models);
         }
 
         [HttpGet]
@@ -112,6 +113,17 @@ namespace QFileServer.Controllers
 
             var downloadStream = new FileStream(fileModel.FullFilePath, FileMode.Open, FileAccess.Read);
             return File(downloadStream, contentType!, fileModel.FileName);
+        }
+
+        public class WeatherForecast
+        {
+            public DateTime Date { get; set; }
+
+            public int TemperatureC { get; set; }
+
+            public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+
+            public string Summary { get; set; }
         }
     }
 }
