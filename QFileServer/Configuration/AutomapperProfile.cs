@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using QFileServer.Data.Entities;
-using QFileServer.DTOs;
+using QFileServer.Definitions.DTOs;
 using QFileServer.Models;
 
 namespace QFileServer.Configuration

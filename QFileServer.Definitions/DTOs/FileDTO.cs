@@ -1,4 +1,4 @@
-﻿namespace QFileServer.DTOs
+﻿namespace QFileServer.Definitions.DTOs
 {
     public class FileDTO
     {

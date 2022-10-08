@@ -1,10 +1,12 @@
 version: '3.4'
 
 services:
+
   qfileserverdb:
     environment:
       SA_PASSWORD: "yourStrong(!)Password"
       ACCEPT_EULA: "Y"
+
   qfileserver:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.StaticFiles;
+using QFileServer.Definitions.DTOs;
 using QFileServer.DTOs;
 using QFileServer.Models;
 using Swashbuckle.AspNetCore.Annotations;
@@ -113,17 +114,6 @@ namespace QFileServer.Controllers
 
             var downloadStream = new FileStream(fileModel.FullFilePath, FileMode.Open, FileAccess.Read);
             return File(downloadStream, contentType!, fileModel.FileName);
-        }
-
-        public class WeatherForecast
-        {
-            public DateTime Date { get; set; }
-
-            public int TemperatureC { get; set; }
-
-            public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-
-            public string Summary { get; set; }
         }
     }
 }

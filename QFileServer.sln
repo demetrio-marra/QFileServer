@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QFileServer", "QFileServer\
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{DA3C9BAE-5E86-411B-A6A1-C2B92F96D304}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QFileServer.Definitions", "QFileServer.Definitions\QFileServer.Definitions.csproj", "{7CB1D6E5-658A-4A84-938B-22111B33F09A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{DA3C9BAE-5E86-411B-A6A1-C2B92F96D304}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA3C9BAE-5E86-411B-A6A1-C2B92F96D304}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DA3C9BAE-5E86-411B-A6A1-C2B92F96D304}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CB1D6E5-658A-4A84-938B-22111B33F09A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CB1D6E5-658A-4A84-938B-22111B33F09A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CB1D6E5-658A-4A84-938B-22111B33F09A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CB1D6E5-658A-4A84-938B-22111B33F09A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
