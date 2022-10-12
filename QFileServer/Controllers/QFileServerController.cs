@@ -1,59 +1,53 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.StaticFiles;
 using QFileServer.Definitions.DTOs;
 using QFileServer.DTOs;
 using QFileServer.Models;
-using Swashbuckle.AspNetCore.Annotations;
-using System.Net;
 
 namespace QFileServer.Controllers
 {
-    [Route("api/v1/[controller]")]
+    /// <summary>
+    /// Controller principale
+    /// </summary>
     [ApiController]
+    [Route("api/v1/[controller]")]
     public class QFileServerController : ControllerBase
     {
         readonly QFileServerService service;
         readonly FileExtensionContentTypeProvider contentTypeProvider;
         readonly IMapper mapper;
 
+        /// <summary>
+        /// ctor
+        /// </summary>
+        /// <param name="service"></param>
+        /// <param name="contentTypeProvider"></param>
+        /// <param name="mapper"></param>
         public QFileServerController(QFileServerService service,
             FileExtensionContentTypeProvider contentTypeProvider,
             IMapper mapper)
         {
             this.service = service;
-            this.contentTypeProvider = contentTypeProvider; 
+            this.contentTypeProvider = contentTypeProvider;
             this.mapper = mapper;
         }
 
         [HttpGet]
-        [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(IQueryable<FileDTO>), description: "Files in repository")]
-        [EnableQuery]
-        public IQueryable<FileDTO> GetAll()
-        {
-            // TODO:
-            // Make sure about max number of records returned
-            // even when no top clause is provided
-            var models = service.GetAllFilesOData();
-            return mapper.ProjectTo<FileDTO>(models);
-        }
-
-        [HttpGet]
         [Route("{id}")]
-        [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(FileDTO), description: "File model in repository")]
-        [SwaggerResponse((int)HttpStatusCode.NotFound, description: "File id not found in repository")]
+        [ProducesResponseType(typeof(QFileServerDTO), statusCode: StatusCodes.Status200OK, "application/json")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Get(long id)
         {
             var fileModel = await service.GetFile(id);
             if (fileModel == null)
                 return NotFound();
 
-            return Ok(mapper.Map<FileDTO>(fileModel));
+            return Ok(mapper.Map<QFileServerDTO>(fileModel));
         }
 
         [HttpPost]
-        [SwaggerResponse((int)HttpStatusCode.OK, type: typeof(FileDTO), description: "File successfully created in repository")]
+        [ProducesResponseType(typeof(QFileServerDTO), statusCode: StatusCodes.Status200OK, "application/json")]
         public async Task<IActionResult> Add([FromForm] FileUploadDTO dto)
         {
             IFormFile f = dto.File!;
@@ -66,13 +60,13 @@ namespace QFileServer.Controllers
                 }, readStream);
             }
 
-            return Ok(mapper.Map<FileDTO>(createdModel));
+            return Ok(mapper.Map<QFileServerDTO>(createdModel));
         }
 
         [HttpPut]
         [Route("{id}")]
-        [SwaggerResponse((int)HttpStatusCode.NoContent, description: "File successfull updated in repository")]
-        [SwaggerResponse((int)HttpStatusCode.NotFound, description: "File id not found in repository")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(long id, [FromForm] FileUploadDTO dto)
         {
             IFormFile f = dto.File!;
@@ -90,8 +84,8 @@ namespace QFileServer.Controllers
 
         [HttpDelete]
         [Route("{id}")]
-        [SwaggerResponse((int)HttpStatusCode.NoContent, description: "File successfull deleted in repository")]
-        [SwaggerResponse((int)HttpStatusCode.NotFound, description: "File id not found in repository")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(long id)
         {
             if (!await service.DeleteFile(id))
@@ -101,8 +95,8 @@ namespace QFileServer.Controllers
 
         [HttpGet]
         [Route("download/{id}")]
-        [SwaggerResponse((int)HttpStatusCode.OK, description: "File successfully downloaded")]
-        [SwaggerResponse((int)HttpStatusCode.NotFound, description: "File id not found in repository")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Download(long id)
         {
             var fileModel = await service.GetFile(id);

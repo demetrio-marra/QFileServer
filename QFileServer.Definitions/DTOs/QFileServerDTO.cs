@@ -1,6 +1,6 @@
 ﻿namespace QFileServer.Definitions.DTOs
 {
-    public class FileDTO
+    public class QFileServerDTO
     {
         public long Id { get; set; }
         public string FileName { get; set; } = string.Empty;

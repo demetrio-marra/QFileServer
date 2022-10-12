@@ -11,7 +11,7 @@ namespace QFileServer.Configuration
         {
             CreateMap<QFileServerEntity, QFileServerModel>()
                 .ReverseMap();
-            CreateMap<QFileServerModel, FileDTO>()
+            CreateMap<QFileServerModel, QFileServerDTO>()
                 .ReverseMap();
         }
     }
