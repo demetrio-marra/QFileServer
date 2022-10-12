@@ -11,8 +11,11 @@ namespace QFileServer.Mvc
             builder.Services.AddAutoMapper(cfg => cfg.AddProfile(new AutomapperProfile()));
 
             // Add services to the container.
-            builder.Services.AddHttpClient(Constants.HttpClientName, 
-                c => c.BaseAddress = new Uri(builder.Configuration.GetValue<string>("QFileServerApiUrl")));
+            builder.Services.AddHttpClient(Constants.QFileServerHttpClientName, 
+                c => c.BaseAddress = new Uri(builder.Configuration.GetValue<string>(Constants.QFileServerHttpClientBaseUrlKey)));
+            builder.Services.AddHttpClient(Constants.ODataQFileServerHttpClientName,
+                c => c.BaseAddress = new Uri(builder.Configuration.GetValue<string>(Constants.ODataQFileServerHttpClientBaseUrlKey)));
+
             builder.Services.AddControllersWithViews();
 
             var app = builder.Build();
@@ -25,7 +28,7 @@ namespace QFileServer.Mvc
                 app.UseHsts();
             }
 
-            //app.UseHttpsRedirection();
+            app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();

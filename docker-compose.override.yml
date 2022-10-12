@@ -24,7 +24,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
-      - QFileServerApiUrl=http://qfileserver/api/v1/
+      - QFileServerApiUrl=http://qfileserver/api/v1/QFileServer/
+      - ODataQFileServerApiUrl=http://qfileserver/odata/v1/QFileServerOData/
     ports:
       - "7000:80"
       - "7443:443"

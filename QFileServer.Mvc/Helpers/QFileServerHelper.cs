@@ -18,5 +18,12 @@
             if (bytes < EB) return decimal.Divide(bytes, PB).ToString("N") + " PB";
             return decimal.Divide(bytes, EB).ToString("N") + " EB";
         }
+
+        public static int CalcAvailablePages(long totalItems, int pageSize)
+        {
+            if (pageSize == 0)
+                return 0;
+            return totalItems < pageSize ? 1 : Convert.ToInt32(Math.Ceiling((decimal)totalItems / (decimal)pageSize));
+        }
     }
 }
