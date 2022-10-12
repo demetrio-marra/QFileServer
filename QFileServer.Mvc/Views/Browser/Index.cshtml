@@ -1,0 +1,81 @@
+﻿@using QFileServer.Mvc.ViewModels
+@model BrowserViewModel
+@{
+    ViewData["Title"] = "Browser";
+}
+
+@section Styles {
+}
+
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table table-striped table-hover">
+                <thead>
+                <th scope="col">Id</th>
+                <th scope="col">Filename</th>
+                <th scope="col">Size</th>
+                <th scope="col"></th>
+                </thead>
+                <tbody>
+
+                @foreach (var item in Model.Files)
+                {
+                    <tr>
+                        <th scope="row">@item.Id</th>
+                        <td>@item.FileName</td>
+                        <td>@item.HRSize</td>
+                        <td>
+                            <a title="Download" asp-action="Download" asp-route-id="@item.Id"><i class="bi-download"></i></a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+    <form id="pagerForm">
+        <div class="row">
+            <div class="col-md-6">
+                <label asp-for="PageSize" class="form-label">Page size</label>
+                <select asp-for="PageSize" asp-items="@(new SelectList(Model.PageSizes))" class="form-select"></select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="PageNumber" class="form-label">Page</label>
+                <input asp-for="PageNumber" type="number" class="form-control" />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <label asp-for="OrderByColumn" class="form-label">Sort by</label>
+                <select asp-for="OrderByColumn" asp-items="@(new SelectList(Model.OrderByColumns))" class="form-select"></select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="OrderByAsc" class="form-check-label">Ascending</label>
+                <input asp-for="OrderByAsc" type="checkbox" class="form-check-input" />
+            </div>
+        </div>
+    </form>
+    </div>
+</div>
+
+
+@section Scripts {
+
+    <script>
+
+        function submitPagerForm() {
+            $('#pagerForm').submit();
+        }
+
+        $(function () {
+            $('#PageSize').on('change', submitPagerForm);
+            $('#PageNumber').on('change', submitPagerForm);
+            $('#OrderByColumn').on('change', submitPagerForm);
+            $('#OrderByAsc').on('change', submitPagerForm);
+        });
+
+    </script>
+}

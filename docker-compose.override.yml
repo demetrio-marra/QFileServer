@@ -13,9 +13,21 @@ services:
       - ASPNETCORE_URLS=https://+:443;http://+:80
       - ConnectionStrings__DefaultConnectionString=Server=qfileserverdb;Initial Catalog=QFileServer;Persist Security Info=False;User ID=sa;Password=yourStrong(!)Password;
     ports:
-      - "80"
-      - "443"
+      - "6000:80"
+      - "6433:443"
     volumes:
       - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
       - ${USERPROFILE}/nas:/nas
+
+  qfileserver.mvc:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=https://+:443;http://+:80
+      - QFileServerApiUrl=http://qfileserver/api/v1/
+    ports:
+      - "7000:80"
+      - "7443:443"
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro

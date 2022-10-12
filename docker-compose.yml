@@ -12,3 +12,10 @@ services:
       dockerfile: QFileServer/Dockerfile
     depends_on:
       - qfileserverdb
+
+  qfileserver.mvc:
+    image: ${DOCKER_REGISTRY-}qfileservermvc
+    build:
+      context: .
+      dockerfile: QFileServer.Mvc/Dockerfile
+
