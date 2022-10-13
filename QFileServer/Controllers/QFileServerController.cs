@@ -52,11 +52,13 @@ namespace QFileServer.Controllers
         {
             IFormFile f = dto.File!;
             QFileServerModel createdModel;
+            var realFileName = Path.GetFileName(f.FileName);
+            
             using (var readStream = f.OpenReadStream())
             {
                 createdModel = await service.AddFile(new QFileServerModel
                 {
-                    FileName = f.FileName
+                    FileName = realFileName
                 }, readStream);
             }
 
