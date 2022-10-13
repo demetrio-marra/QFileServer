@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using QFileServer.Mvc.DTOs;
+using QFileServer.Definitions.DTOs;
 using QFileServer.Mvc.Helpers;
 using QFileServer.Mvc.Services;
 using QFileServer.Mvc.ViewModels;
@@ -10,11 +10,11 @@ namespace QFileServer.Mvc.Controllers
     public class BrowserController : Controller
     {
         private readonly ILogger<BrowserController> _logger;
-        readonly IQFileServerApiService apiService;
+        readonly QFileServerApiService apiService;
         readonly IMapper mapper;
 
         public BrowserController(ILogger<BrowserController> logger,
-            IQFileServerApiService apiService, 
+            QFileServerApiService apiService, 
             IMapper mapper)
         {
             _logger = logger;
@@ -75,7 +75,7 @@ namespace QFileServer.Mvc.Controllers
         }
 
         BrowserViewModel CreateViewModel(IBrowserGridPreferences gridPreferences,
-            ODataQFileServerModelDTO oDataQueryResult)
+            ODataQFileServerDTO oDataQueryResult)
         {
             var ret = new BrowserViewModel
             {

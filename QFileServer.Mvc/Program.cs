@@ -11,13 +11,10 @@ namespace QFileServer.Mvc
 
             builder.Services.AddAutoMapper(cfg => cfg.AddProfile(new AutomapperProfile()));
 
-            // Add services to the container.
-            builder.Services.AddHttpClient(Constants.QFileServerHttpClientName, 
-                c => c.BaseAddress = new Uri(builder.Configuration.GetValue<string>(Constants.QFileServerHttpClientBaseUrlKey)));
-            builder.Services.AddHttpClient(Constants.ODataQFileServerHttpClientName,
-                c => c.BaseAddress = new Uri(builder.Configuration.GetValue<string>(Constants.ODataQFileServerHttpClientBaseUrlKey)));
-
-            builder.Services.AddSingleton<IQFileServerApiService, QFileServerApiService>();
+            builder.Services.AddHttpClient<QFileServerApiService>(cfg =>
+            {
+                cfg.BaseAddress = new Uri(builder.Configuration.GetValue<string>(Constants.QFileServerHttpClientBaseUrlKey));
+            });
 
             builder.Services.AddSession();
 

@@ -1,9 +1,8 @@
-﻿using QFileServer.Definitions.DTOs;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace QFileServer.Mvc.DTOs
+namespace QFileServer.Definitions.DTOs
 {
-    public class ODataQFileServerModelDTO
+    public class ODataQFileServerDTO
     {
         [JsonPropertyName("@odata.context")]
         public string ODataContext { get; set; } = string.Empty;

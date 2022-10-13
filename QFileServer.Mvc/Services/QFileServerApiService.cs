@@ -1,58 +1,56 @@
 ﻿using QFileServer.Definitions.DTOs;
-using QFileServer.Mvc.DTOs;
 using QFileServer.Mvc.Models;
 using System.Text.Json;
 
 namespace QFileServer.Mvc.Services
 {
-    public class QFileServerApiService : IQFileServerApiService
+    public class QFileServerApiService
     {
-        readonly IHttpClientFactory httpClientFactory;
+        static readonly string ODATA_PATH = "/odata/v1/QFileServerOData";
+        static readonly string API_PATH = "/api/v1/QFileServer";
 
-        public QFileServerApiService(IHttpClientFactory httpClientFactory)
+        readonly HttpClient httpClient;
+
+        public QFileServerApiService(HttpClient httpClient)
         {
-            this.httpClientFactory = httpClientFactory;
+            this.httpClient = httpClient;
         }
 
-        async Task<ODataQFileServerModelDTO?> IQFileServerApiService.ODataGetFiles(string oDataQueryString)
+        public async Task<ODataQFileServerDTO?> ODataGetFiles(string oDataQueryString)
         {
-            var client = httpClientFactory.CreateClient(Constants.ODataQFileServerHttpClientName);
-            var uriString = "?" + oDataQueryString;
-            var result = await client.GetAsync(new Uri(uriString, UriKind.Relative));
+            var uriString = ODATA_PATH + "?" + oDataQueryString;
+            var result = await httpClient.GetAsync(new Uri(uriString, UriKind.Relative));
             result.EnsureSuccessStatusCode();
 
             var responseString = await result.Content.ReadAsStringAsync();
-            var ret = JsonSerializer.Deserialize<ODataQFileServerModelDTO>(responseString);
+            var ret = JsonSerializer.Deserialize<ODataQFileServerDTO>(responseString);
 
             return ret;
         }
 
-        async Task<QFileServerDTO?> IQFileServerApiService.UploadFile(IFormFile formFile)
+        public async Task<QFileServerDTO?> UploadFile(IFormFile formFile)
         {
             var mpContent = new MultipartFormDataContent();
             using (var rs = formFile.OpenReadStream())
             {
                 mpContent.Add(new StreamContent(rs), "File", Path.GetFileName(formFile.FileName));
-                var client = httpClientFactory.CreateClient(Constants.QFileServerHttpClientName);
-                var response = await client.PostAsync("", mpContent);
+                var response = await httpClient.PostAsync(new Uri(API_PATH, UriKind.Relative), mpContent);
                 response.EnsureSuccessStatusCode();
                 var ret = await JsonSerializer.DeserializeAsync<QFileServerDTO>(await response.Content.ReadAsStreamAsync());
                 return ret;
             }
         }
-        async Task IQFileServerApiService.DeleteFile(long id)
+       public async Task DeleteFile(long id)
         {
-            var client = httpClientFactory.CreateClient(Constants.QFileServerHttpClientName);
-            var uriString = id.ToString();
-            var result = await client.DeleteAsync(new Uri(uriString, UriKind.Relative));
+            var uriString = API_PATH + "/" + id.ToString();
+            var result = await httpClient.DeleteAsync(new Uri(uriString, UriKind.Relative));
             result.EnsureSuccessStatusCode();
         }
 
-        async Task<FileDownloadModel> IQFileServerApiService.DownloadFile(long id)
+        public async Task<FileDownloadModel> DownloadFile(long id)
         {
-            var client = httpClientFactory.CreateClient(Constants.QFileServerHttpClientName);
-            var uriString = $"download/{id}";
-            var response = await client.GetAsync(new Uri(uriString, UriKind.Relative));
+            var uriString = $"{API_PATH}/download/{id}";
+            var response = await httpClient.GetAsync(new Uri(uriString, UriKind.Relative));
            
             response.EnsureSuccessStatusCode();
            
