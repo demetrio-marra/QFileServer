@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QFileServer.Mvc.ViewModels
 {
-    public class BrowserViewModel
+    public class BrowserViewModel: IBrowserGridPreferences
     {
         public IEnumerable<FileViewModel>? Files { get; set; } = Enumerable.Empty<FileViewModel>();
 
@@ -24,10 +24,10 @@ namespace QFileServer.Mvc.ViewModels
         public string? FilterColumn { get; set; } = "FileName";
         public string? FilterSearchText { get; set; } = null;
 
-        public IEnumerable<int> AvailablePageNumbers { get; set; } = Enumerable.Range(1, 1);
+        public IEnumerable<int> AvailablePageNumbers { get => Enumerable.Range(1, LastPageNumber); }
 
-        public int LastPageNumber { get; set; }
-        public int TotalFilesCount { get; set; }
+        public int LastPageNumber { get => Helpers.QFileServerHelper.CalcAvailablePages(TotalFilesCount, PageSize); }
+        public long TotalFilesCount { get; set; } = 0;
 
         public IEnumerable<int> PageSizes { get; set; } = Enumerable.Range(5, 50).Where(x => x % 5 == 0);
         public IEnumerable<string> OrderByColumns { get; set; } = new List<string>

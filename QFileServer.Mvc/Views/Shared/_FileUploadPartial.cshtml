@@ -1,24 +1,23 @@
 ﻿@using QFileServer.Mvc.ViewModels
-@model UploadFileViewModel
+@model IUploadFileViewModel
 
 <div class="modal" id="uploadModal" tabindex="-1" aria-labelledby="uploadModal">
-    <form asp-action="Upload" enctype="multipart/form-data">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Upload file</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <input asp-for="FormFile" type="file" class="form-control" />
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button id="uploadButton" class="btn btn-primary" type="submit">Upload</button>
-                </div>
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload file</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label asp-for="FormFile" class="form-label">Choose a file or drop it here</label>
+                <input asp-for="FormFile" type="file" class="form-control" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button id="uploadButton" class="btn btn-primary" type="submit">Upload</button>
             </div>
         </div>
-    </form>
+    </div>
 </div>
 
 

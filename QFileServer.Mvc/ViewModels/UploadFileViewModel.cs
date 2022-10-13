@@ -2,7 +2,7 @@
 
 namespace QFileServer.Mvc.ViewModels
 {
-    public class UploadFileViewModel
+    public class UploadFileViewModel : IUploadFileViewModel
     {
         [Required]
         public IFormFile? FormFile { get; set; }

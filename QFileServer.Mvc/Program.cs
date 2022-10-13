@@ -16,6 +16,8 @@ namespace QFileServer.Mvc
             builder.Services.AddHttpClient(Constants.ODataQFileServerHttpClientName,
                 c => c.BaseAddress = new Uri(builder.Configuration.GetValue<string>(Constants.ODataQFileServerHttpClientBaseUrlKey)));
 
+            builder.Services.AddSession();
+
             builder.Services.AddControllersWithViews();
 
             var app = builder.Build();
@@ -27,6 +29,8 @@ namespace QFileServer.Mvc
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+
+            app.UseSession();
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();

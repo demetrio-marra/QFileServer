@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using QFileServer.Definitions.DTOs;
 using QFileServer.Mvc.DTOs;
-using QFileServer.Mvc.Helpers;
 using QFileServer.Mvc.ViewModels;
 using System.Text.Json;
 using System.Web;
@@ -26,20 +25,40 @@ namespace QFileServer.Mvc.Controllers
         [HttpGet("Index")]
         public async Task<IActionResult> Index()
         {
-            return View(await CreateViewModel());
+            var gridPreferences = GetOrInitGridPreferences();
+            var oDataFilter = ODataFilter(gridPreferences);
+            var oDataQueryResult = await ODataGetFilesApi(oDataFilter);
+            var vm = CreateViewModel(gridPreferences, oDataQueryResult);
+            return View(vm);
         }
 
         [HttpPost("Index")]
         public async Task<IActionResult> Index(BrowserViewModel vm)
         {
-            return View(await CreateViewModel(vm));
+            var previous = GetOrInitGridPreferences();
+            if (previous.PageSize != vm.PageSize
+                || string.Compare(previous.FilterSearchText ?? "", vm.FilterSearchText ?? "") != 0)
+                vm.PageNumber = 1; // reset to first page
+
+            SaveGridPreferences(vm);
+
+            var gridPreferences = GetOrInitGridPreferences();
+            var oDataFilter = ODataFilter(gridPreferences);
+            var oDataQueryResult = await ODataGetFilesApi(oDataFilter);
+            var nvm = CreateViewModel(gridPreferences, oDataQueryResult);
+            return View("Index", nvm);
         }
 
         [HttpGet("delete/{id:int}")]
         public async Task<IActionResult> Delete(long id)
         {
-            await DeleteServerFile(id);
-            return RedirectToAction("Index");
+            await DeleteServerFileApi(id);
+
+            var gridPreferences = GetOrInitGridPreferences();
+            var oDataFilter = ODataFilter(gridPreferences);
+            var oDataQueryResult = await ODataGetFilesApi(oDataFilter);
+            var nvm = CreateViewModel(gridPreferences, oDataQueryResult);
+            return View("Index", nvm);
         }
 
         [HttpPost("Upload")]
@@ -48,14 +67,15 @@ namespace QFileServer.Mvc.Controllers
             if (!ModelState.IsValid)
                 return View("Index", new BrowserViewModel());
 
-            QFileServerDTO? uploadedFile = await UploadServerFile(uvm.FormFile);
+            QFileServerDTO? uploadedFile = await UploadServerFileApi(uvm.FormFile);
 
             // TODO popup with added file name & id
 
-            return RedirectToAction("Index");
-
-            //var vm = await CreateViewModel();
-            //return View("Index", vm);
+            var gridPreferences = GetOrInitGridPreferences();
+            var oDataFilter = ODataFilter(gridPreferences);
+            var oDataQueryResult = await ODataGetFilesApi(oDataFilter);
+            var nvm = CreateViewModel(gridPreferences, oDataQueryResult);
+            return View("Index", nvm);
         }
 
         [HttpGet("download/{id:int}")]
@@ -70,44 +90,52 @@ namespace QFileServer.Mvc.Controllers
             return File(await response.Content.ReadAsStreamAsync(), contentType, fileName);
         }
 
-        async Task<BrowserViewModel> CreateViewModel(BrowserViewModel? vm = null)
+        async Task<BrowserViewModel> RefreshGrid()
         {
-            vm = vm ?? new BrowserViewModel();
+            var gridPreferences = GetOrInitGridPreferences();
+            var oDataFilter = ODataFilter(gridPreferences);
 
-            var oDataFilter = ODataFilter(vm.PageSize,
-                vm.PageNumber, vm.OrderByColumn!,
-                vm.OrderByAsc, vm.FilterColumn,
-                vm.FilterSearchText);
-
-            var oDataQueryResult = await ODataGetFiles(oDataFilter);
-
-            vm.Files = mapper.Map<IEnumerable<FileViewModel>>(oDataQueryResult.Items);
-            var maxPage = QFileServerHelper.CalcAvailablePages(oDataQueryResult.Count, vm.PageSize);
-            vm.LastPageNumber = maxPage;
-            vm.AvailablePageNumbers = Enumerable.Range(1, maxPage);
-            vm.TotalFilesCount = vm.Files?.Count() ?? 0;
-
+            var oDataQueryResult = await ODataGetFilesApi(oDataFilter);
+            var vm = CreateViewModel(gridPreferences, oDataQueryResult);
             return vm;
         }
 
-        string ODataFilter(int pageSize, int page, string orderByColumn, bool orderByAsc, 
-            string? filterColumn, string? filterSearchText)
+        BrowserViewModel CreateViewModel(IBrowserGridPreferences gridPreferences,
+            ODataQFileServerModelDTO oDataQueryResult)
         {
-            var ret = "";
-            var topClause = $"$top={pageSize}";
-            var skipClause = $"$skip={pageSize * (page - 1)}";
-            var orderByClause = $"$orderby={orderByColumn} {(orderByAsc ? "asc" : "desc")}";
-            var countClause = "$count=true";
-
-            ret = string.Join("&", topClause, skipClause, orderByClause, countClause);
-
-            if (!string.IsNullOrWhiteSpace(filterSearchText))
-                ret = string.Join("&", ret, $"$filter=contains({HttpUtility.UrlEncode(filterColumn)}, '{HttpUtility.UrlEncode(filterSearchText)}')");
+            var ret = new BrowserViewModel
+            {
+                Files = mapper.Map<IEnumerable<FileViewModel>>(oDataQueryResult.Items),
+                TotalFilesCount = oDataQueryResult.Count,
+                FilterColumn = gridPreferences.FilterColumn,
+                FilterSearchText = gridPreferences.FilterSearchText,
+                OrderByAsc = gridPreferences.OrderByAsc,
+                OrderByColumn = gridPreferences.OrderByColumn,
+                PageNumber = gridPreferences.PageNumber,
+                PageSize = gridPreferences.PageSize
+            };
 
             return ret;
         }
 
-        async Task<ODataQFileServerModelDTO?> ODataGetFiles(string odatafilter)
+        string ODataFilter(IBrowserGridPreferences gridPreferences)
+        {
+            var ret = "";
+            var topClause = $"$top={gridPreferences.PageSize}";
+            var skipClause = $"$skip={gridPreferences.PageSize * (gridPreferences.PageNumber - 1)}";
+            var orderByClause = $"$orderby={gridPreferences.OrderByColumn} {(gridPreferences.OrderByAsc ? "asc" : "desc")}";
+            var countClause = "$count=true";
+
+            ret = string.Join("&", topClause, skipClause, orderByClause, countClause);
+
+            if (!string.IsNullOrWhiteSpace(gridPreferences.FilterSearchText))
+                ret = string.Join("&", ret, 
+                    $"$filter=contains({HttpUtility.UrlEncode(gridPreferences.FilterColumn)}, '{HttpUtility.UrlEncode(gridPreferences.FilterSearchText)}')");
+
+            return ret;
+        }
+
+        async Task<ODataQFileServerModelDTO?> ODataGetFilesApi(string odatafilter)
         {
             var client = _httpClientFactory.CreateClient(Constants.ODataQFileServerHttpClientName);
             var uriString = "?" + odatafilter;
@@ -120,7 +148,7 @@ namespace QFileServer.Mvc.Controllers
             return ret;
         }
 
-        async Task DeleteServerFile(long id)
+        async Task DeleteServerFileApi(long id)
         {
             var client = _httpClientFactory.CreateClient(Constants.QFileServerHttpClientName);
             var uriString = id.ToString();
@@ -128,7 +156,7 @@ namespace QFileServer.Mvc.Controllers
             result.EnsureSuccessStatusCode();
         }
 
-        async Task<QFileServerDTO?> UploadServerFile(IFormFile ff)
+        async Task<QFileServerDTO?> UploadServerFileApi(IFormFile ff)
         {
             var mpContent = new MultipartFormDataContent();
             using (var rs = ff.OpenReadStream())
@@ -140,6 +168,41 @@ namespace QFileServer.Mvc.Controllers
                 var ret = await JsonSerializer.DeserializeAsync<QFileServerDTO>(await response.Content.ReadAsStreamAsync());
                 return ret;
             }          
+        }
+
+        IBrowserGridPreferences? GetOrInitGridPreferences()
+        {
+            if (HttpContext.Session.GetString("GRID_PageNumber") == null)
+                SaveGridPreferences(new BrowserViewModel()); // init default settings
+            return GetGridPreferences();
+        }
+
+        void SaveGridPreferences(IBrowserGridPreferences vm)
+        {
+            HttpContext.Session.SetInt32("GRID_PageNumber", vm.PageNumber);
+            HttpContext.Session.SetInt32("GRID_PageSize", vm.PageSize);
+            HttpContext.Session.SetString("GRID_OrderByColumn", vm.OrderByColumn);
+            HttpContext.Session.SetString("GRID_OrderByAsc", vm.OrderByAsc.ToString());
+            HttpContext.Session.SetString("GRID_FilterColumn", vm.FilterColumn ?? "");
+            HttpContext.Session.SetString("GRID_FilterSearchText", vm.FilterSearchText ?? "");
+        }
+
+        IBrowserGridPreferences? GetGridPreferences()
+        {
+            if (HttpContext.Session.GetString("GRID_PageNumber") == null)
+                return null;
+
+            var ret = new BrowserViewModel
+            {
+                PageNumber = HttpContext.Session.GetInt32("GRID_PageNumber")!.Value,
+                PageSize = HttpContext.Session.GetInt32("GRID_PageSize")!.Value,
+                OrderByColumn = HttpContext.Session.GetString("GRID_OrderByColumn")!,
+                OrderByAsc = Convert.ToBoolean(HttpContext.Session.GetString("GRID_OrderByAsc")!),
+                FilterColumn = HttpContext.Session.GetString("GRID_FilterColumn"),
+                FilterSearchText = HttpContext.Session.GetString("GRID_FilterSearchText")
+            };
+
+            return ret;
         }
     }
 }
