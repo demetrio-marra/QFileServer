@@ -23,7 +23,13 @@ namespace QFileServer.Mvc.Controllers
             this.mapper = mapper;
         }
 
-        [Route("Index")]
+        [HttpGet("Index")]
+        public async Task<IActionResult> Index()
+        {
+            return View(await CreateViewModel());
+        }
+
+        [HttpPost("Index")]
         public async Task<IActionResult> Index(BrowserViewModel vm)
         {
             return View(await CreateViewModel(vm));
@@ -33,12 +39,10 @@ namespace QFileServer.Mvc.Controllers
         public async Task<IActionResult> Delete(long id)
         {
             await DeleteServerFile(id);
-            var vm = await CreateViewModel();
-            return View("Index", vm);
+            return RedirectToAction("Index");
         }
 
-        [Route("Upload")]
-        [HttpPost]
+        [HttpPost("Upload")]
         public async Task<IActionResult> Upload([FromForm]UploadFileViewModel uvm)
         {
             if (!ModelState.IsValid)
@@ -48,8 +52,10 @@ namespace QFileServer.Mvc.Controllers
 
             // TODO popup with added file name & id
 
-            var vm = await CreateViewModel();
-            return View("Index", vm);
+            return RedirectToAction("Index");
+
+            //var vm = await CreateViewModel();
+            //return View("Index", vm);
         }
 
         [HttpGet("download/{id:int}")]
@@ -79,6 +85,7 @@ namespace QFileServer.Mvc.Controllers
             var maxPage = QFileServerHelper.CalcAvailablePages(oDataQueryResult.Count, vm.PageSize);
             vm.LastPageNumber = maxPage;
             vm.AvailablePageNumbers = Enumerable.Range(1, maxPage);
+            vm.TotalFilesCount = vm.Files?.Count() ?? 0;
 
             return vm;
         }
