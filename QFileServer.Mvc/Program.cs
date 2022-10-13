@@ -1,4 +1,5 @@
 using QFileServer.Mvc.Configuration;
+using QFileServer.Mvc.Services;
 
 namespace QFileServer.Mvc
 {
@@ -15,6 +16,8 @@ namespace QFileServer.Mvc
                 c => c.BaseAddress = new Uri(builder.Configuration.GetValue<string>(Constants.QFileServerHttpClientBaseUrlKey)));
             builder.Services.AddHttpClient(Constants.ODataQFileServerHttpClientName,
                 c => c.BaseAddress = new Uri(builder.Configuration.GetValue<string>(Constants.ODataQFileServerHttpClientBaseUrlKey)));
+
+            builder.Services.AddSingleton<IQFileServerApiService, QFileServerApiService>();
 
             builder.Services.AddSession();
 

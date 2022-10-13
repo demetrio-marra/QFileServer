@@ -1,4 +1,6 @@
-﻿namespace QFileServer.Mvc.Helpers
+﻿using System.Web;
+
+namespace QFileServer.Mvc.Helpers
 {
     public class QFileServerHelper
     {
@@ -24,6 +26,24 @@
             if (pageSize == 0)
                 return 0;
             return totalItems < pageSize ? 1 : Convert.ToInt32(Math.Ceiling((decimal)totalItems / (decimal)pageSize));
+        }
+
+        public static string ODataFilter(int pageSize, int pageNumber, string orderByColumn, bool orderByAsc,
+            string? filterColumn, string? filterSearchText)
+        {
+            var topClause = $"$top={pageSize}";
+            var skipClause = $"$skip={pageSize * (pageNumber - 1)}";
+            var orderByClause = $"$orderby={HttpUtility.UrlEncode(orderByColumn)} {(orderByAsc ? "asc" : "desc")}";
+            var countClause = "$count=true";
+
+            string? ret = string.Join("&", topClause, skipClause, orderByClause, countClause);
+
+            if (!string.IsNullOrWhiteSpace(filterSearchText)
+                && !string.IsNullOrWhiteSpace(filterColumn))
+                ret = string.Join("&", ret,
+                    $"$filter=contains({HttpUtility.UrlEncode(filterColumn)}, '{HttpUtility.UrlEncode(filterSearchText)}')");
+
+            return ret;
         }
     }
 }

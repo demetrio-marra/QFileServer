@@ -18,7 +18,7 @@
         </div>
     </div>
 
-    <form id="pagerForm" asp-action="index">
+    <form id="pagerForm" asp-action="Index">
         <div class="row mb-3">
             <div class="col-md-11">
                 <input class="form-control" type="text" asp-for="FilterSearchText" placeholder="Search by filename" />
@@ -109,26 +109,29 @@
     </form>
 
 @* modal confirm delete *@
-<div class="modal" id="deleteModal" tabindex="-1" aria-labelledby="deleteModal">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Delete file</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete this file?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <a id="deleteButton" class="btn btn-danger">Delete</a>
+<form id="formDelete" asp-action="Delete">
+    <div class="modal" id="deleteModal" tabindex="-1" aria-labelledby="deleteModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Delete file</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to delete this file?</p>
+                </div>
+                <div class="modal-footer">
+                    <input type="hidden" name="Id" id="IdConfirmDelete" />
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button id="confirmDeleteButton" class="btn btn-danger" type="submit">Delete</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+</form>
 
 @* modal upload *@
-<form asp-action="Upload" enctype="multipart/form-data">
+<form id="formUpload" asp-action="Upload" enctype="multipart/form-data">
     @await Html.PartialAsync("../Shared/_FileUploadPartial.cshtml", new UploadFileViewModel())
 </form>
 
@@ -149,17 +152,22 @@
             var fileId = $(this).data("id");
             var fileName = $(this).data("filename");
             $('#deleteModal .modal-body p').text('Are you sure you want to delete ' + fileName + '?');
-            $('#deleteButton').prop('href', '/Delete/' + fileId);
+            $('#IdConfirmDelete').val(fileId);
             $('#deleteModal').modal('show');
         }
 
         $(function () {
+
             $('#PageSize').on('change', submitPagerForm);
             $('#PageNumber').on('change', submitPagerForm);
             $('#OrderByColumn').on('change', submitPagerForm);
             $('#OrderByAsc').on('change', submitPagerForm);
             $('#FilterSearchTextChanged').on('change', submitPagerForm);
             $('.deleteButtons').on('click', eventDeleteButtonClicked);
+            document.getElementById('confirmDeleteButton').addEventListener('click', event => setTimeout(() => event.target.disabled = true, 0));
+            document.getElementById('formUpload').addEventListener('submit', 
+                event => setTimeout(() => $('#uploadButton').attr('disabled', true), 0));
+         
         });
 
     </script>

@@ -1,103 +1,78 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
-using QFileServer.Definitions.DTOs;
 using QFileServer.Mvc.DTOs;
+using QFileServer.Mvc.Helpers;
+using QFileServer.Mvc.Services;
 using QFileServer.Mvc.ViewModels;
-using System.Text.Json;
-using System.Web;
 
 namespace QFileServer.Mvc.Controllers
 {
     public class BrowserController : Controller
     {
         private readonly ILogger<BrowserController> _logger;
-        readonly IHttpClientFactory _httpClientFactory;
+        readonly IQFileServerApiService apiService;
         readonly IMapper mapper;
 
-        public BrowserController(ILogger<BrowserController> logger, 
-            IHttpClientFactory httpClientFactory, IMapper mapper)
+        public BrowserController(ILogger<BrowserController> logger,
+            IQFileServerApiService apiService, 
+            IMapper mapper)
         {
             _logger = logger;
-            _httpClientFactory = httpClientFactory;
+            this.apiService = apiService;   
             this.mapper = mapper;
         }
 
         [HttpGet("Index")]
         public async Task<IActionResult> Index()
         {
-            var gridPreferences = GetOrInitGridPreferences();
-            var oDataFilter = ODataFilter(gridPreferences);
-            var oDataQueryResult = await ODataGetFilesApi(oDataFilter);
-            var vm = CreateViewModel(gridPreferences, oDataQueryResult);
-            return View(vm);
+            return View(await RefreshViewModel());
         }
 
         [HttpPost("Index")]
         public async Task<IActionResult> Index(BrowserViewModel vm)
         {
             var previous = GetOrInitGridPreferences();
+            // reset to first page when
+            // 1. page size changes
+            // 2. search criteria changes
             if (previous.PageSize != vm.PageSize
                 || string.Compare(previous.FilterSearchText ?? "", vm.FilterSearchText ?? "") != 0)
-                vm.PageNumber = 1; // reset to first page
+                vm.PageNumber = 1; 
 
             SaveGridPreferences(vm);
-
-            var gridPreferences = GetOrInitGridPreferences();
-            var oDataFilter = ODataFilter(gridPreferences);
-            var oDataQueryResult = await ODataGetFilesApi(oDataFilter);
-            var nvm = CreateViewModel(gridPreferences, oDataQueryResult);
-            return View("Index", nvm);
+            return View("Index", await RefreshViewModel());
         }
 
-        [HttpGet("delete/{id:int}")]
+        [HttpPost("Delete")]
         public async Task<IActionResult> Delete(long id)
         {
-            await DeleteServerFileApi(id);
-
-            var gridPreferences = GetOrInitGridPreferences();
-            var oDataFilter = ODataFilter(gridPreferences);
-            var oDataQueryResult = await ODataGetFilesApi(oDataFilter);
-            var nvm = CreateViewModel(gridPreferences, oDataQueryResult);
-            return View("Index", nvm);
+            await apiService.DeleteFile(id);            
+            return View("Index", await RefreshViewModel());
         }
 
         [HttpPost("Upload")]
         public async Task<IActionResult> Upload([FromForm]UploadFileViewModel uvm)
         {
-            if (!ModelState.IsValid)
-                return View("Index", new BrowserViewModel());
+            if (ModelState.IsValid)
+                await apiService.UploadFile(uvm.FormFile);
 
-            QFileServerDTO? uploadedFile = await UploadServerFileApi(uvm.FormFile);
-
-            // TODO popup with added file name & id
-
-            var gridPreferences = GetOrInitGridPreferences();
-            var oDataFilter = ODataFilter(gridPreferences);
-            var oDataQueryResult = await ODataGetFilesApi(oDataFilter);
-            var nvm = CreateViewModel(gridPreferences, oDataQueryResult);
-            return View("Index", nvm);
+            return View("Index", await RefreshViewModel());
         }
 
-        [HttpGet("download/{id:int}")]
+        [HttpGet("Download/{id:int}")]
         public async Task<IActionResult> Download(long id)
         {
-            var client = _httpClientFactory.CreateClient(Constants.QFileServerHttpClientName);
-            var uriString = $"download/{id}";
-            var response = await client.GetAsync(new Uri(uriString, UriKind.Relative));
-            response.EnsureSuccessStatusCode();
-            var contentType = response.Content.Headers?.ContentType?.MediaType ?? "octet/stream";
-            var fileName = response.Content.Headers?.ContentDisposition?.FileName;
-            return File(await response.Content.ReadAsStreamAsync(), contentType, fileName);
+            var downloadFileModel = await apiService.DownloadFile(id);
+            return File(downloadFileModel.FileStream, downloadFileModel.ContentType, 
+                downloadFileModel.FileName);
         }
 
-        async Task<BrowserViewModel> RefreshGrid()
+        async Task<BrowserViewModel> RefreshViewModel()
         {
             var gridPreferences = GetOrInitGridPreferences();
             var oDataFilter = ODataFilter(gridPreferences);
-
-            var oDataQueryResult = await ODataGetFilesApi(oDataFilter);
-            var vm = CreateViewModel(gridPreferences, oDataQueryResult);
-            return vm;
+            var oDataQueryResult = await apiService.ODataGetFiles(oDataFilter);
+            return CreateViewModel(gridPreferences, oDataQueryResult);
         }
 
         BrowserViewModel CreateViewModel(IBrowserGridPreferences gridPreferences,
@@ -118,57 +93,10 @@ namespace QFileServer.Mvc.Controllers
             return ret;
         }
 
-        string ODataFilter(IBrowserGridPreferences gridPreferences)
-        {
-            var ret = "";
-            var topClause = $"$top={gridPreferences.PageSize}";
-            var skipClause = $"$skip={gridPreferences.PageSize * (gridPreferences.PageNumber - 1)}";
-            var orderByClause = $"$orderby={gridPreferences.OrderByColumn} {(gridPreferences.OrderByAsc ? "asc" : "desc")}";
-            var countClause = "$count=true";
-
-            ret = string.Join("&", topClause, skipClause, orderByClause, countClause);
-
-            if (!string.IsNullOrWhiteSpace(gridPreferences.FilterSearchText))
-                ret = string.Join("&", ret, 
-                    $"$filter=contains({HttpUtility.UrlEncode(gridPreferences.FilterColumn)}, '{HttpUtility.UrlEncode(gridPreferences.FilterSearchText)}')");
-
-            return ret;
-        }
-
-        async Task<ODataQFileServerModelDTO?> ODataGetFilesApi(string odatafilter)
-        {
-            var client = _httpClientFactory.CreateClient(Constants.ODataQFileServerHttpClientName);
-            var uriString = "?" + odatafilter;
-            var result = await client.GetAsync(new Uri(uriString, UriKind.Relative));
-            result.EnsureSuccessStatusCode();
-
-            var responseString = await result.Content.ReadAsStringAsync();
-            var ret = JsonSerializer.Deserialize<ODataQFileServerModelDTO>(responseString);
-
-            return ret;
-        }
-
-        async Task DeleteServerFileApi(long id)
-        {
-            var client = _httpClientFactory.CreateClient(Constants.QFileServerHttpClientName);
-            var uriString = id.ToString();
-            var result = await client.DeleteAsync(new Uri(uriString, UriKind.Relative));
-            result.EnsureSuccessStatusCode();
-        }
-
-        async Task<QFileServerDTO?> UploadServerFileApi(IFormFile ff)
-        {
-            var mpContent = new MultipartFormDataContent();
-            using (var rs = ff.OpenReadStream())
-            {
-                mpContent.Add(new StreamContent(ff.OpenReadStream()), "File", ff.FileName);
-                var client = _httpClientFactory.CreateClient(Constants.QFileServerHttpClientName);
-                var response = await client.PostAsync("", mpContent);
-                response.EnsureSuccessStatusCode();
-                var ret = await JsonSerializer.DeserializeAsync<QFileServerDTO>(await response.Content.ReadAsStreamAsync());
-                return ret;
-            }          
-        }
+        static string ODataFilter(IBrowserGridPreferences gridPreferences)
+            => QFileServerHelper.ODataFilter(gridPreferences.PageSize, gridPreferences.PageNumber,
+                gridPreferences.OrderByColumn, gridPreferences.OrderByAsc, gridPreferences.FilterColumn,
+                gridPreferences.FilterSearchText);
 
         IBrowserGridPreferences? GetOrInitGridPreferences()
         {
