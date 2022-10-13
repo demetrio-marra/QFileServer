@@ -28,7 +28,7 @@ namespace QFileServer.Mvc.Helpers
             return totalItems < pageSize ? 1 : Convert.ToInt32(Math.Ceiling((decimal)totalItems / (decimal)pageSize));
         }
 
-        public static string ODataFilter(int pageSize, int pageNumber, string orderByColumn, bool orderByAsc,
+        public static string BuildODataQueryString(int pageSize, int pageNumber, string orderByColumn, bool orderByAsc,
             string? filterColumn, string? filterSearchText)
         {
             var topClause = $"$top={pageSize}";

@@ -14,10 +14,10 @@ namespace QFileServer.Mvc.Services
             this.httpClientFactory = httpClientFactory;
         }
 
-        async Task<ODataQFileServerModelDTO?> IQFileServerApiService.ODataGetFiles(string oDataQuery)
+        async Task<ODataQFileServerModelDTO?> IQFileServerApiService.ODataGetFiles(string oDataQueryString)
         {
             var client = httpClientFactory.CreateClient(Constants.ODataQFileServerHttpClientName);
-            var uriString = "?" + oDataQuery;
+            var uriString = "?" + oDataQueryString;
             var result = await client.GetAsync(new Uri(uriString, UriKind.Relative));
             result.EnsureSuccessStatusCode();
 
@@ -57,7 +57,7 @@ namespace QFileServer.Mvc.Services
             response.EnsureSuccessStatusCode();
            
             var contentType = response.Content.Headers?.ContentType?.MediaType ?? "octet/stream";
-            var fileName = response.Content.Headers?.ContentDisposition?.FileName;
+            var fileName = response.Content.Headers?.ContentDisposition?.FileNameStar;
 
             return new FileDownloadModel
             {

@@ -22,13 +22,12 @@ namespace QFileServer.Mvc.Controllers
             this.mapper = mapper;
         }
 
-        [HttpGet("Index")]
         public async Task<IActionResult> Index()
         {
             return View(await RefreshViewModel());
         }
 
-        [HttpPost("Index")]
+        [HttpPost]
         public async Task<IActionResult> Index(BrowserViewModel vm)
         {
             var previous = GetOrInitGridPreferences();
@@ -94,7 +93,7 @@ namespace QFileServer.Mvc.Controllers
         }
 
         static string ODataFilter(IBrowserGridPreferences gridPreferences)
-            => QFileServerHelper.ODataFilter(gridPreferences.PageSize, gridPreferences.PageNumber,
+            => QFileServerHelper.BuildODataQueryString(gridPreferences.PageSize, gridPreferences.PageNumber,
                 gridPreferences.OrderByColumn, gridPreferences.OrderByAsc, gridPreferences.FilterColumn,
                 gridPreferences.FilterSearchText);
 

@@ -14,12 +14,12 @@
 
     <div class="row mb-3">
         <div class="col-md-12">
-            <h3>Browser</h3>
+            <h1>Browser</h1>
         </div>
     </div>
 
     <form id="pagerForm" asp-action="Index">
-        <div class="row mb-3">
+        <div class="row mb-1">
             <div class="col-md-11">
                 <input class="form-control" type="text" asp-for="FilterSearchText" placeholder="Search by filename" />
             </div>
@@ -70,7 +70,7 @@
                         <tr>
                             <td colspan="4">
                                 <div class="text-end">
-                                    <p>Total items: @Model.TotalFilesCount</p>
+                                    <span>Total items: @Model.TotalFilesCount</span>
                                 </div>
                             </td>
                         </tr>
@@ -162,7 +162,7 @@
             $('#PageNumber').on('change', submitPagerForm);
             $('#OrderByColumn').on('change', submitPagerForm);
             $('#OrderByAsc').on('change', submitPagerForm);
-            $('#FilterSearchTextChanged').on('change', submitPagerForm);
+            $('#FilterSearchText').on('change', submitPagerForm);
             $('.deleteButtons').on('click', eventDeleteButtonClicked);
             document.getElementById('confirmDeleteButton').addEventListener('click', event => setTimeout(() => event.target.disabled = true, 0));
             document.getElementById('formUpload').addEventListener('submit', 
