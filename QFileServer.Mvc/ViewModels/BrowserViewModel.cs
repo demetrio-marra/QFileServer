@@ -24,8 +24,6 @@ namespace QFileServer.Mvc.ViewModels
         public string? FilterColumn { get; set; } = "FileName";
         public string? FilterSearchText { get; set; } = null;
 
-        public IEnumerable<int> AvailablePageNumbers { get => Enumerable.Range(1, LastPageNumber); }
-
         public int LastPageNumber { get => Helpers.QFileServerHelper.CalcAvailablePages(TotalFilesCount, PageSize); }
         public long TotalFilesCount { get; set; } = 0;
 

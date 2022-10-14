@@ -98,7 +98,7 @@
                         <label asp-for="PageNumber" class="form-label">Page</label>
                         <div class="input-group">
                             <div class="input-group-text">1</div>
-                            <select asp-for="PageNumber" asp-items="@(new SelectList(Model.AvailablePageNumbers))" class="form-select"></select>
+                            <input min="1" max="@Model.LastPageNumber" type="number" asp-for="PageNumber" class="form-control" />
                             <div class="input-group-text">@Model.LastPageNumber</div>
                         </div>
                     </div>
