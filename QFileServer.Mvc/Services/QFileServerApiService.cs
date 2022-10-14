@@ -8,6 +8,10 @@ namespace QFileServer.Mvc.Services
     {
         static readonly string ODATA_PATH = "/odata/v1/QFileServerOData";
         static readonly string API_PATH = "/api/v1/QFileServer";
+        static readonly JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
 
         readonly HttpClient httpClient;
 
@@ -19,11 +23,10 @@ namespace QFileServer.Mvc.Services
         public async Task<ODataQFileServerDTO?> ODataGetFiles(string oDataQueryString)
         {
             var uriString = ODATA_PATH + "?" + oDataQueryString;
-            var result = await httpClient.GetAsync(new Uri(uriString, UriKind.Relative));
-            result.EnsureSuccessStatusCode();
+            var response = await httpClient.GetAsync(new Uri(uriString, UriKind.Relative));
+            response.EnsureSuccessStatusCode();
 
-            var responseString = await result.Content.ReadAsStringAsync();
-            var ret = JsonSerializer.Deserialize<ODataQFileServerDTO>(responseString);
+            var ret = await JsonSerializer.DeserializeAsync<ODataQFileServerDTO>(await response.Content.ReadAsStreamAsync());
 
             return ret;
         }
@@ -36,15 +39,16 @@ namespace QFileServer.Mvc.Services
                 mpContent.Add(new StreamContent(rs), "File", Path.GetFileName(formFile.FileName));
                 var response = await httpClient.PostAsync(new Uri(API_PATH, UriKind.Relative), mpContent);
                 response.EnsureSuccessStatusCode();
-                var ret = await JsonSerializer.DeserializeAsync<QFileServerDTO>(await response.Content.ReadAsStreamAsync());
+                var ret = await JsonSerializer.DeserializeAsync<QFileServerDTO>(await response.Content.ReadAsStreamAsync(),
+                    jsonSerializerOptions);
                 return ret;
             }
         }
        public async Task DeleteFile(long id)
         {
             var uriString = API_PATH + "/" + id.ToString();
-            var result = await httpClient.DeleteAsync(new Uri(uriString, UriKind.Relative));
-            result.EnsureSuccessStatusCode();
+            var response = await httpClient.DeleteAsync(new Uri(uriString, UriKind.Relative));
+            response.EnsureSuccessStatusCode();
         }
 
         public async Task<FileDownloadModel> DownloadFile(long id)

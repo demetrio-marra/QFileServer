@@ -18,6 +18,14 @@
         </div>
     </div>
 
+    @if (Model.DisplayAlert)
+    {
+        <div class="alert @(Model.AlertType) alert-dismissible fade show" role="alert">
+            @Model.AlertMessageText
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <form id="pagerForm" asp-action="Index">
         <div class="row mb-1">
             <div class="col-md-11">

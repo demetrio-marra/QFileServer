@@ -29,12 +29,19 @@ namespace QFileServer.Mvc.ViewModels
         public int LastPageNumber { get => Helpers.QFileServerHelper.CalcAvailablePages(TotalFilesCount, PageSize); }
         public long TotalFilesCount { get; set; } = 0;
 
-        public IEnumerable<int> PageSizes { get; set; } = Enumerable.Range(5, 50).Where(x => x % 5 == 0);
-        public IEnumerable<string> OrderByColumns { get; set; } = new List<string>
+        public IEnumerable<int> PageSizes { get => Enumerable.Range(5, 50).Where(x => x % 5 == 0); }
+        public IEnumerable<string> OrderByColumns
         {
-            "Id",
-            "FileName",
-            "Size"
-        };
+            get => new List<string>
+            {
+                "Id",
+                "FileName",
+                "Size"
+            };
+        }
+
+        public bool DisplayAlert { get; set; } = false;
+        public string? AlertType { get; set; }
+        public string? AlertMessageText { get; set; }
     }
 }

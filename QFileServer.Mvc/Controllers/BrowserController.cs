@@ -4,6 +4,7 @@ using QFileServer.Definitions.DTOs;
 using QFileServer.Mvc.Helpers;
 using QFileServer.Mvc.Services;
 using QFileServer.Mvc.ViewModels;
+using System.Web;
 
 namespace QFileServer.Mvc.Controllers
 {
@@ -24,38 +25,129 @@ namespace QFileServer.Mvc.Controllers
 
         public async Task<IActionResult> Index()
         {
-            return View(await RefreshViewModel());
+            var gridPreferences = GetOrInitGridPreferences();
+            var newVM = CreateViewModel(gridPreferences);
+
+            try
+            {
+                var oDataFilter = ODataFilter(gridPreferences);
+                var oDataQueryResult = await apiService.ODataGetFiles(oDataFilter);
+                newVM = CreateViewModel(gridPreferences, oDataQueryResult);
+            }
+            catch (Exception ex)
+            {
+                newVM.AlertMessageText = "File fetch failed : " + HttpUtility.HtmlEncode(ex.Message);
+                newVM.AlertType = "alert-danger";
+                newVM.DisplayAlert = true;
+            }
+            return View(newVM);
         }
 
         [HttpPost]
         public async Task<IActionResult> Index(BrowserViewModel vm)
         {
-            var previous = GetOrInitGridPreferences();
+            var gridPreferences = GetOrInitGridPreferences();
+            var newVM = CreateViewModel(gridPreferences);
+
+            if (!ModelState.IsValid)
+            {               
+                newVM.AlertMessageText = "Bad parameters";
+                newVM.AlertType = "alert-danger";
+                newVM.DisplayAlert = true;
+                return View(newVM);
+            }
+            
             // reset to first page when
             // 1. page size changes
             // 2. search criteria changes
-            if (previous.PageSize != vm.PageSize
-                || string.Compare(previous.FilterSearchText ?? "", vm.FilterSearchText ?? "") != 0)
-                vm.PageNumber = 1; 
+            if (gridPreferences.PageSize != vm.PageSize
+                || string.Compare(gridPreferences.FilterSearchText ?? "", vm.FilterSearchText ?? "") != 0)
+                vm.PageNumber = 1;
 
             SaveGridPreferences(vm);
-            return View("Index", await RefreshViewModel());
+
+            gridPreferences = GetOrInitGridPreferences();
+            var oDataFilter = ODataFilter(gridPreferences);
+
+            try
+            {
+                var oDataQueryResult = await apiService.ODataGetFiles(oDataFilter);
+                newVM = CreateViewModel(gridPreferences, oDataQueryResult);
+                return View(newVM);
+            } 
+            catch (Exception ex)
+            {
+                newVM.AlertMessageText = "File fetch failed : " + HttpUtility.HtmlEncode(ex.Message);
+                newVM.AlertType = "alert-danger";
+                newVM.DisplayAlert = true;
+                return View(newVM);
+            }
         }
 
         [HttpPost("Delete")]
         public async Task<IActionResult> Delete(long id)
         {
-            await apiService.DeleteFile(id);            
-            return View("Index", await RefreshViewModel());
+            var gridPreferences = GetOrInitGridPreferences();
+            var newVM = CreateViewModel(gridPreferences);
+
+            try
+            {
+                await apiService.DeleteFile(id);
+
+                var oDataFilter = ODataFilter(gridPreferences);
+                var oDataQueryResult = await apiService.ODataGetFiles(oDataFilter);
+                newVM = CreateViewModel(gridPreferences, oDataQueryResult);
+
+                newVM.AlertMessageText = $"File id {id} deleted successfully.";
+                newVM.AlertType = "alert-info";
+                newVM.DisplayAlert = true;
+            } 
+            catch (Exception ex)
+            {
+                newVM.AlertMessageText = $"File id {id} delete failed: {HttpUtility.HtmlEncode(ex.Message)}";
+                newVM.AlertType = "alert-danger";
+                newVM.DisplayAlert = true;
+            }
+
+            return View("Index", newVM);
         }
 
         [HttpPost("Upload")]
         public async Task<IActionResult> Upload([FromForm]UploadFileViewModel uvm)
         {
-            if (ModelState.IsValid)
-                await apiService.UploadFile(uvm.FormFile);
+            var gridPreferences = GetOrInitGridPreferences();
+            BrowserViewModel newVM = CreateViewModel(gridPreferences);
 
-            return View("Index", await RefreshViewModel());
+            if (!ModelState.IsValid)
+            {
+                newVM.AlertMessageText = "Bad parameters";
+                newVM.AlertType = "alert-danger";
+                newVM.DisplayAlert = true;
+                return View(newVM);
+            }
+            
+            var fileDisplayName = HttpUtility.HtmlEncode(Path.GetFileName(uvm.FormFile.FileName));
+
+            try
+            {
+                var ret = await apiService.UploadFile(uvm.FormFile);
+
+                var oDataFilter = ODataFilter(gridPreferences);
+                var oDataQueryResult = await apiService.ODataGetFiles(oDataFilter);
+                newVM = CreateViewModel(gridPreferences, oDataQueryResult);
+
+                newVM.AlertMessageText = $"File {fileDisplayName} uploaded successfully with id {ret.Id}";
+                newVM.AlertType = "alert-info";
+                newVM.DisplayAlert = true;
+            } 
+            catch (Exception ex)
+            {
+                newVM.AlertMessageText = $"File upload failed: {HttpUtility.HtmlEncode(ex.Message)}";
+                newVM.AlertType = "alert-danger";
+                newVM.DisplayAlert = true;
+            }
+
+            return View("Index", newVM);
         }
 
         [HttpGet("Download/{id:int}")]
@@ -66,21 +158,12 @@ namespace QFileServer.Mvc.Controllers
                 downloadFileModel.FileName);
         }
 
-        async Task<BrowserViewModel> RefreshViewModel()
-        {
-            var gridPreferences = GetOrInitGridPreferences();
-            var oDataFilter = ODataFilter(gridPreferences);
-            var oDataQueryResult = await apiService.ODataGetFiles(oDataFilter);
-            return CreateViewModel(gridPreferences, oDataQueryResult);
-        }
-
         BrowserViewModel CreateViewModel(IBrowserGridPreferences gridPreferences,
-            ODataQFileServerDTO oDataQueryResult)
+            ODataQFileServerDTO? oDataQueryResult = null)
         {
             var ret = new BrowserViewModel
             {
-                Files = mapper.Map<IEnumerable<FileViewModel>>(oDataQueryResult.Items),
-                TotalFilesCount = oDataQueryResult.Count,
+                
                 FilterColumn = gridPreferences.FilterColumn,
                 FilterSearchText = gridPreferences.FilterSearchText,
                 OrderByAsc = gridPreferences.OrderByAsc,
@@ -88,6 +171,13 @@ namespace QFileServer.Mvc.Controllers
                 PageNumber = gridPreferences.PageNumber,
                 PageSize = gridPreferences.PageSize
             };
+
+            if (oDataQueryResult != null)
+            {
+                ODataQFileServerDTO d = oDataQueryResult;
+                ret.Files = mapper.Map<IEnumerable<FileViewModel>>(d.Items);
+                ret.TotalFilesCount = d.Count;
+            }
 
             return ret;
         }
