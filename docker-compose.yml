@@ -18,4 +18,5 @@ services:
     build:
       context: .
       dockerfile: QFileServer.Mvc/Dockerfile
-
+    depends_on:
+      - qfileserver

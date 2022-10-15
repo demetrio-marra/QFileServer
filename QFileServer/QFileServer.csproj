@@ -30,4 +30,8 @@
     <ProjectReference Include="..\QFileServer.Definitions\QFileServer.Definitions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Properties\PublishProfiles\" />
+  </ItemGroup>
+
 </Project>
