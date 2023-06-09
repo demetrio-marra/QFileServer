@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using QFileServer;
 using QFileServer.Configuration;
+using QFileServer.Configuration.Resilience;
 using QFileServer.Data;
 using QFileServer.StorageManagement;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -25,6 +26,8 @@ builder.Services.AddSingleton<IStorageDirectorySelector, DateStorageDirectorySel
 
 builder.Services.AddDbContext<QFileServerDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnectionString")));
+
+builder.Services.AddSingleton<IResilientPoliciesLocator, ResilientPoliciesLocator>();
 
 builder.Services.AddScoped<QFileServerRepository>();
 builder.Services.AddAutoMapper(cfg => cfg.AddProfile(new AutomapperProfile()));
@@ -74,8 +77,17 @@ var app = builder.Build();
 // db init and creation
 using (var serviceScope = app.Services.GetService<IServiceScopeFactory>()!.CreateScope())
 {
-    var context = serviceScope.ServiceProvider.GetRequiredService<QFileServerDbContext>();
-    context.Database.Migrate();
+    var policyLocator = serviceScope.ServiceProvider.GetRequiredService<IResilientPoliciesLocator>();
+    var sqlPolicy = policyLocator.GetPolicy(ResilientPolicyType.SqlDatabase);
+
+    await sqlPolicy.ExecuteAsync(async () =>
+    {
+        // Resolve YourDbContext within the scope
+        var dbContext = serviceScope.ServiceProvider.GetRequiredService<QFileServerDbContext>();
+
+        // Apply migrations
+        await dbContext.Database.MigrateAsync();
+    });
 }
 
 // Configure the HTTP request pipeline.
