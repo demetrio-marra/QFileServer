@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.OData;
 using Microsoft.AspNetCore.OData.Routing.Attributes;
 using Microsoft.AspNetCore.StaticFiles;
@@ -36,6 +37,23 @@ builder.Services.AddScoped<QFileServerService>();
 builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
 
 var odataEDM = ODataEdmModelBuilder.Build();
+
+// Configure the maximum request body size before calling UseRouting, UseEndpoints, etc.
+// 1_000_000_000 represents the new size limit in bytes (about 1GB in this example).
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = long.MaxValue;
+});
+
+builder.Services.Configure<IISServerOptions>(options =>
+{
+    options.MaxRequestBodySize = null; // 1_000_000_000;
+});
+
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.MaxRequestBodySize = null; // 1_000_000_000;
+});
 
 builder.Services.AddControllers()
     .AddOData(options => options.Filter().OrderBy().Count().SetMaxTop(1000).SkipToken()
