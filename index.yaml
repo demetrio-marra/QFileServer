@@ -3,7 +3,17 @@ entries:
   qfileserver-chart:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: "2025-03-18T12:40:30.601490787Z"
+    created: "2025-03-18T14:27:18.128657038Z"
+    description: QFileServer Helm chart for Kubernetes
+    digest: 0b944c57d1d6f5ee708000d3a582be2759a830fec3bb7242434713b9e54f35e2
+    name: qfileserver-chart
+    type: application
+    urls:
+    - qfileserver-chart-0.1.1.tgz
+    version: 0.1.1
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2025-03-18T14:27:18.128282323Z"
     description: QFileServer Helm chart for Kubernetes
     digest: 5d36a610522c6fc8effec24f1a6b0982e309893ec75c26c169e9131d9bf8c238
     name: qfileserver-chart
@@ -11,4 +21,4 @@ entries:
     urls:
     - qfileserver-chart-0.1.0.tgz
     version: 0.1.0
-generated: "2025-03-18T12:40:30.600963672Z"
+generated: "2025-03-18T14:27:18.127758346Z"
