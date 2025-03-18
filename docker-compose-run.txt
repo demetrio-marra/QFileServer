@@ -1,0 +1,32 @@
+version: '3.4'
+
+services:
+
+  qfileserverdb:
+    image: "mcr.microsoft.com/mssql/server"
+    user: root
+    restart: unless-stopped
+    environment:
+      - SA_PASSWORD=yourStrong!Passw0rd
+      - ACCEPT_EULA=Y
+    volumes:
+      - /var/opt/ffmpegui/volumes/qfileserver-sql:/var/opt/mssql/data
+
+  qfileserver:
+    image: "demetriomarra3/qfileserver"
+    restart: unless-stopped
+    environment:
+      - ConnectionStrings__DefaultConnectionString=Server=qfileserverdb;Initial Catalog=QFileServer;Persist Security Info=False;User ID=sa;Password=yourStrong!Passw0rd;
+      - QFileServiceConfiguration__FileServerRootPath=/app/nasroot
+    depends_on:
+      - qfileserverdb
+    volumes:
+      - /var/opt/ffmpegui/volumes/qfileserver-fs:/app/nasroot
+
+  qfileserver.mvc:
+    image: "demetriomarra3/qfileservermvc"
+    depends_on:
+      - qfileserver
+    environment:
+      - QFileServerApiUrl=http://qfileserver
+    restart: unless-stopped
